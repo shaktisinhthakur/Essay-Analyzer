@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPSC Essay Analyzer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 20px
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 24px
+    }
+
+    .config-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap
+    }
+
+    .config-section label {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap
+    }
+
+    .config-section select,
+    .config-section input {
+      flex: 1;
+      min-width: 140px;
+      padding: 8px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+      background: #fff
+    }
+
+    .config-section select:focus,
+    .config-section input:focus {
+      border-color: #4361ee
+    }
+
+    .config-section .api-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 8px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .config-section .api-input:focus {
+      border-color: #4361ee
+    }
+
+    .btn-save {
+      background: #4361ee;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s
+    }
+
+    .btn-save:hover {
+      opacity: .9
+    }
+
+    .key-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #666;
+      margin-left: 4px
+    }
+
+    .key-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+      transition: background .3s
+    }
+
+    .key-dot.saved {
+      background: #2ecc71
+    }
+
+    .essay-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .08)
+    }
+
+    .essay-section textarea {
+      width: 100%;
+      min-height: 280px;
+      padding: 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      line-height: 1.6;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    .essay-section textarea:focus {
+      border-color: #4361ee
+    }
+
+    .textarea-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px
+    }
+
+    .word-count {
+      font-size: 13px;
+      color: #888
+    }
+
+    .analyze-btn {
+      background: #4361ee;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 7px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s
+    }
+
+    .analyze-btn:hover:not(:disabled) {
+      opacity: .9;
+      transform: translateY(-1px)
+    }
+
+    .analyze-btn:disabled {
+      background: #b0b8d1;
+      cursor: not-allowed
+    }
+
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px
+    }
+
+    .score-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 14px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .08)
+    }
+
+    .score-card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: #888;
+      font-weight: 600;
+      margin-bottom: 6px
+    }
+
+    .score-card .value {
+      font-size: 32px;
+      font-weight: 800;
+      color: #1a1a2e
+    }
+
+    .score-card .value.high {
+      color: #2ecc71
+    }
+
+    .score-card .value.med {
+      color: #f39c12
+    }
+
+    .score-card .value.low {
+      color: #e74c3c
+    }
+
+    .eval-badge {
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 14px;
+      display: none
+    }
+
+    .eval-badge.show {
+      display: block
+    }
+
+    .feedback-section {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px
+    }
+
+    .feedback-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .08)
+    }
+
+    .feedback-card .fb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px
+    }
+
+    .feedback-card .fb-name {
+      font-weight: 700;
+      font-size: 15px
+    }
+
+    .feedback-card .fb-score {
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    .fb-score.high {
+      background: #d5f5e3;
+      color: #1e8449
+    }
+
+    .fb-score.med {
+      background: #fef0d5;
+      color: #b7950b
+    }
+
+    .fb-score.low {
+      background: #fadbd8;
+      color: #c0392b
+    }
+
+    .feedback-card .fb-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #444;
+      margin-bottom: 12px
+    }
+
+    .mistakes-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px
+    }
+
+    .mistake-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: default;
+      position: relative;
+      transition: all .15s
+    }
+
+    .mistake-tag:hover {
+      transform: scale(1.05);
+      z-index: 2
+    }
+
+    .mistake-tag[data-tag="Grammar"] {
+      background: #fce4ec;
+      color: #c62828
+    }
+
+    .mistake-tag[data-tag="Vocabulary"] {
+      background: #e8eaf6;
+      color: #283593
+    }
+
+    .mistake-tag[data-tag="Spelling"] {
+      background: #fff3e0;
+      color: #e65100
+    }
+
+    .mistake-tag[data-tag="Shallow"] {
+      background: #f3e5f5;
+      color: #6a1b9a
+    }
+
+    .mistake-tag[data-tag="Missing Point"] {
+      background: #fce4ec;
+      color: #b71c1c
+    }
+
+    .mistake-tag[data-tag="Weak Argument"] {
+      background: #fff8e1;
+      color: #f57f17
+    }
+
+    .mistake-tag[data-tag="Structure"] {
+      background: #e3f2fd;
+      color: #1565c0
+    }
+
+    .mistake-tag[data-tag="Flow"] {
+      background: #e0f2f1;
+      color: #00695c
+    }
+
+    .mistake-tag[data-tag="Coherence"] {
+      background: #fce4ec;
+      color: #880e4f
+    }
+
+    .mistake-tag .tooltip {
+      visibility: hidden;
+      width: 220px;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity .2s;
+      pointer-events: none;
+      z-index: 10
+    }
+
+    .mistake-tag:hover .tooltip {
+      visibility: visible;
+      opacity: 1
+    }
+
+    .mistake-tag .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -4px;
+      border: 4px solid transparent;
+      border-top-color: #333
+    }
+
+    .summary {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px
+    }
+
+    .summary .avg-high {
+      color: #2ecc71
+    }
+
+    .summary .avg-med {
+      color: #f39c12
+    }
+
+    .summary .avg-low {
+      color: #e74c3c
+    }
+
+    .loader-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, .8);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 16px
+    }
+
+    .loader-overlay.active {
+      display: flex
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #4361ee;
+      border-radius: 50%;
+      animation: spin .7s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .loader-overlay p {
+      font-size: 15px;
+      color: #666;
+      font-weight: 500
+    }
+
+    .error-msg {
+      background: #ffeaea;
+      color: #c0392b;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none
+    }
+
+    .error-msg.show {
+      display: block
+    }
+
+    @media(max-width:768px) {
+      .cards-row {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .feedback-section {
+        grid-template-columns: 1fr
+      }
+
+      .config-section {
+        flex-direction: column;
+        align-items: stretch
+      }
+
+      .config-section select,
+      .config-section input {
+        min-width: 0
+      }
+    }
+
+    @media(max-width:480px) {
+      .cards-row {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>UPSC Essay Analyzer</h1>
+    <p class="subtitle">Get detailed AI feedback on your essay across Language, Analysis &amp; Clarity</p>
+
+    <div class="config-section">
+      <label for="providerSelect">Provider</label>
+      <select id="providerSelect">
+        <option value="">-- Select --</option>
+        <option value="anthropic">Anthropic (Claude)</option>
+        <option value="groq">Groq</option>
+        <option value="openai">OpenAI (GPT)</option>
+        <option value="gemini">Google Gemini</option>
+      </select>
+      <label for="modelSelect">Model</label>
+      <select id="modelSelect" disabled>
+        <option value="">-- Select provider first --</option>
+      </select>
+      <label for="apiKey">API Key</label>
+      <input type="password" id="apiKey" class="api-input" placeholder="Enter API key">
+      <button id="saveKeyBtn" class="btn-save">Save</button>
+      <span class="key-status">
+        <span class="key-dot" id="keyDot"></span>
+        <span id="keyStatusText">Not saved</span>
+      </span>
+    </div>
+
+    <div class="essay-section">
+      <textarea id="essayInput" placeholder="Paste your UPSC essay here..."></textarea>
+      <div class="textarea-footer">
+        <span class="word-count">Words: <span id="wordCount">0</span></span>
+        <button id="analyzeBtn" class="analyze-btn" disabled>Analyze Essay</button>
+      </div>
+    </div>
+
+    <div id="errorMsg" class="error-msg"></div>
+
+    <div class="cards-row" id="scoreCards">
+      <div class="score-card">
+        <div class="label">Average Score</div>
+        <div class="value" id="avgScore">—</div>
+      </div>
+      <div class="score-card">
+        <div class="label">Language</div>
+        <div class="value" id="langScore">—</div>
+      </div>
+      <div class="score-card">
+        <div class="label">Analysis</div>
+        <div class="value" id="analysisScore">—</div>
+      </div>
+      <div class="score-card">
+        <div class="label">Clarity</div>
+        <div class="value" id="clarityScore">—</div>
+      </div>
+    </div>
+
+    <div id="evalBadge" class="eval-badge"></div>
+
+    <div class="feedback-section" id="feedbackSection">
+      <div class="feedback-card" id="langFeedback">
+        <div class="fb-header"><span class="fb-name">Language</span><span class="fb-score" id="langBadge">—</span></div>
+        <div class="fb-text" id="langText">Waiting for analysis...</div>
+        <div class="mistakes-wrap" id="langMistakes"></div>
+      </div>
+      <div class="feedback-card" id="analysisFeedback">
+        <div class="fb-header"><span class="fb-name">Analysis</span><span class="fb-score" id="analysisBadge">—</span>
+        </div>
+        <div class="fb-text" id="analysisText">Waiting for analysis...</div>
+        <div class="mistakes-wrap" id="analysisMistakes"></div>
+      </div>
+      <div class="feedback-card" id="clarityFeedback">
+        <div class="fb-header"><span class="fb-name">Clarity</span><span class="fb-score" id="clarityBadge">—</span>
+        </div>
+        <div class="fb-text" id="clarityText">Waiting for analysis...</div>
+        <div class="mistakes-wrap" id="clarityMistakes"></div>
+      </div>
+    </div>
+
+    <div id="summaryLine" class="summary"></div>
+  </div>
+
+  <div class="loader-overlay" id="loader">
+    <div class="spinner"></div>
+    <p>Analyzing your essay across 3 dimensions...</p>
+  </div>
+
+  <script>
+    const MODELS = {
+      anthropic: ["claude-opus-4-20250514", "claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"],
+      groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "qwen/qwen3-32b"],
+      openai: ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"],
+      gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash"],
+    };
+
+    let saved = { provider: "", model: "", apiKey: "" };
+
+    const providerSelect = document.getElementById("providerSelect");
+    const modelSelect = document.getElementById("modelSelect");
+    const apiKeyInput = document.getElementById("apiKey");
+    const saveKeyBtn = document.getElementById("saveKeyBtn");
+    const keyDot = document.getElementById("keyDot");
+    const keyStatusText = document.getElementById("keyStatusText");
+    const essayInput = document.getElementById("essayInput");
+    const wordCount = document.getElementById("wordCount");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const errorMsg = document.getElementById("errorMsg");
+    const loader = document.getElementById("loader");
+    const summaryLine = document.getElementById("summaryLine");
+    const evalBadge = document.getElementById("evalBadge");
+
+    function updateWordCount() {
+      const text = essayInput.value.trim();
+      wordCount.textContent = text ? text.split(/\s+/).length : 0;
+    }
+    essayInput.addEventListener("input", updateWordCount);
+
+    providerSelect.addEventListener("change", () => {
+      const prov = providerSelect.value;
+      modelSelect.innerHTML = "";
+      if (!prov) {
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = "<option value=''>-- Select provider first --</option>";
+        return;
+      }
+      modelSelect.disabled = false;
+      modelSelect.innerHTML = "<option value=''>-- Select model --</option>";
+      MODELS[prov].forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        modelSelect.appendChild(opt);
+      });
+      updateSaveState();
+    });
+
+    function updateSaveState() {
+      const k = apiKeyInput.value.trim();
+      const p = providerSelect.value;
+      const m = modelSelect.value;
+      const allReady = k && p && m;
+      if (!allReady && saved.apiKey) {
+        saved = { provider: "", model: "", apiKey: "" };
+        keyDot.className = "key-dot";
+        keyStatusText.textContent = "Not saved";
+        analyzeBtn.disabled = true;
+      }
+    }
+
+    apiKeyInput.addEventListener("input", updateSaveState);
+    modelSelect.addEventListener("change", updateSaveState);
+
+    saveKeyBtn.addEventListener("click", () => {
+      const k = apiKeyInput.value.trim();
+      const p = providerSelect.value;
+      const m = modelSelect.value;
+      if (!p) { showError("Please select a provider."); return; }
+      if (!m) { showError("Please select a model."); return; }
+      if (!k) { showError("Please enter an API key."); return; }
+      saved = { provider: p, model: m, apiKey: k };
+      keyDot.className = "key-dot saved";
+      keyStatusText.textContent = "Key saved";
+      analyzeBtn.disabled = false;
+      hideError();
+    });
+
+    function showError(msg) { errorMsg.textContent = msg; errorMsg.className = "error-msg show"; }
+    function hideError() { errorMsg.className = "error-msg"; }
+
+    function setScoreValue(el, score) {
+      el.textContent = score;
+      el.className = "value";
+      if (score >= 7) el.classList.add("high");
+      else if (score >= 4) el.classList.add("med");
+      else el.classList.add("low");
+    }
+
+    function setBadge(el, score) {
+      el.textContent = score + "/10";
+      el.className = "fb-score";
+      if (score >= 7) el.classList.add("high");
+      else if (score >= 4) el.classList.add("med");
+      else el.classList.add("low");
+    }
+
+    function createMistakeTag(m) {
+      const span = document.createElement("span");
+      span.className = "mistake-tag";
+      span.setAttribute("data-tag", m.tag);
+      span.textContent = m.tag;
+      const tip = document.createElement("span");
+      tip.className = "tooltip";
+      tip.textContent = m.issue;
+      span.appendChild(tip);
+      return span;
+    }
+
+    function clearFeedback() {
+      ["langText", "analysisText", "clarityText"].forEach(id => document.getElementById(id).textContent = "Waiting for analysis...");
+      ["langMistakes", "analysisMistakes", "clarityMistakes"].forEach(id => document.getElementById(id).innerHTML = "");
+      ["avgScore", "langScore", "analysisScore", "clarityScore"].forEach(id => { document.getElementById(id).textContent = "—"; document.getElementById(id).className = "value"; });
+      ["langBadge", "analysisBadge", "clarityBadge"].forEach(id => { document.getElementById(id).textContent = "—"; document.getElementById(id).className = "fb-score"; });
+      summaryLine.innerHTML = "";
+      evalBadge.className = "eval-badge";
+      evalBadge.innerHTML = "";
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    async function callAnalyze(essay) {
+      const resp = await fetch("/analyze/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          essay: essay,
+          api_key: saved.apiKey,
+          provider: saved.provider,
+          model: saved.model,
+        }),
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
+      return data;
+    }
+
+    analyzeBtn.addEventListener("click", async () => {
+      const essay = essayInput.value.trim();
+      if (!essay) { showError("Please paste your essay before analyzing."); return; }
+      hideError();
+      clearFeedback();
+      loader.classList.add("active");
+      try {
+        const data = await callAnalyze(essay);
+        const langRes = data.language;
+        const analysisRes = data.analysis;
+        const clarityRes = data.clarity;
+        const avg = ((langRes.score + analysisRes.score + clarityRes.score) / 3).toFixed(1);
+        const avgNum = parseFloat(avg);
+        setScoreValue(document.getElementById("avgScore"), avgNum);
+        setScoreValue(document.getElementById("langScore"), langRes.score);
+        setScoreValue(document.getElementById("analysisScore"), analysisRes.score);
+        setScoreValue(document.getElementById("clarityScore"), clarityRes.score);
+        setBadge(document.getElementById("langBadge"), langRes.score);
+        setBadge(document.getElementById("analysisBadge"), analysisRes.score);
+        setBadge(document.getElementById("clarityBadge"), clarityRes.score);
+        document.getElementById("langText").textContent = langRes.feedback;
+        document.getElementById("analysisText").textContent = analysisRes.feedback;
+        document.getElementById("clarityText").textContent = clarityRes.feedback;
+        document.getElementById("langMistakes").append(...(langRes.mistakes || []).map(createMistakeTag));
+        document.getElementById("analysisMistakes").append(...(analysisRes.mistakes || []).map(createMistakeTag));
+        document.getElementById("clarityMistakes").append(...(clarityRes.mistakes || []).map(createMistakeTag));
+        const avgClass = avgNum >= 7 ? "avg-high" : avgNum >= 4 ? "avg-med" : "avg-low";
+        summaryLine.innerHTML = `Your essay scored <span class="${avgClass}">${avgNum}/10</span> on average`;
+        evalBadge.className = "eval-badge show";
+        evalBadge.textContent = `Evaluated using: ${capitalize(data.provider)} - ${data.model}`;
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        loader.classList.remove("active");
+      }
+    });
+
+    updateWordCount();
+  </script>
+</body>
+
+</html>
