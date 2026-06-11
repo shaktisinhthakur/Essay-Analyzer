@@ -33,6 +33,7 @@ db.sqlite3
 db.sqlite3-journal
 media/
 
+
 # Environment / secrets - NEVER COMMIT THESE
 .env
 .env.*
@@ -49,6 +50,7 @@ Thumbs.db
 
 # Jupyter Notebooks checkpoints
 .ipynb_checkpoints/
+05_upsc_essay_workflow.ipynb
 
 # Test / debug scripts
 test_groq.py

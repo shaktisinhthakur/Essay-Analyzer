@@ -1,0 +1,17 @@
+.git
+.gitignore
+env/
+venv/
+.venv/
+newenv/
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+*.ipynb
+.env
+.env.*
+!.env.example
+test_groq.py
+.DS_Store
+Thumbs.db
